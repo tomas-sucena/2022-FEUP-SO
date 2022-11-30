@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall
-TARGET = txt2epub
+TARGET = txt2epub2
 
 all: $(TARGET)
 
@@ -9,5 +9,4 @@ $(TARGET): $(TARGET).c
 
 clean:
 	@ $(RM) $(TARGET)
-	@ $(RM) *.zip
 	@ $(RM) *.txt

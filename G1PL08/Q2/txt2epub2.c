@@ -58,6 +58,7 @@ int main(int argc, char* argv[]){
             return convert_to_epub(argv[i], epub);
         }
         else{
+            /* Parent */
             printf("[pid%d] converting %s ...\n", pid, argv[i]);
         }
     }
