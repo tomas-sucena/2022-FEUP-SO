@@ -57,6 +57,9 @@ int main(int argc, char* argv[]){
             /* Child */
             return convert_to_epub(argv[i], epub);
         }
+        else{
+            printf("[pid%d] converting %s ...\n", pid, argv[i]);
+        }
     }
 
     // esperar que os processos child terminem a conversão
