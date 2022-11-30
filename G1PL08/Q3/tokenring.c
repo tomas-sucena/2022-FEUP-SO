@@ -39,8 +39,8 @@ int main(int argc, char* argv[]){
     float t = atof(argv[3]);
 
     // verificar se os argumentos são válidos
-    if (n <= 0){
-        perror("Error! Number of processes must be positive");
+    if (n <= 1){
+        perror("Error! Number of processes must be greater than 1");
         return EXIT_FAILURE;
     }
     else if (p < 0 || p > 1){
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
     }
 
     // criar o token
-    long token = -1;
+    long token = 0;
     
     int prev = n,
         next = (n == 1) ? 1 : 2;
@@ -114,7 +114,7 @@ r:  while (running){
         close(fd[READ]);
 
         // bloquear o envio do token
-        if (p >= rng()){
+w:      if (p >= rng()){
             printf("[p%d] lock on token (val = %ld)\n", p_num, token);
             sleep(t);
             printf("[p%d] unlock token\n", p_num);
@@ -123,7 +123,7 @@ r:  while (running){
         // ESCRITA
         next = (p_num == n) ? 1 : p_num + 1; // processo seguinte
 
-w:      sprintf(pipename, "pipes/pipe%dto%d", p_num, next);
+        sprintf(pipename, "pipes/pipe%dto%d", p_num, next);
         fd[WRITE] = open(pipename, O_WRONLY);
 
         if (fd[WRITE] < 0){ // caso não dê para abrir o pipe
