@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall
-TARGET = txt2epub2
+TARGET = txt2epub
 
 all: $(TARGET)
 
