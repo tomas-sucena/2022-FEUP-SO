@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <math.h>
@@ -12,7 +11,8 @@
 
 /* VARIÁVEIS GLOBAIS */
 static volatile sig_atomic_t running = 1;
-int n, MAX_PIPENAME_SIZE;
+int n = 0;
+char* pipename;
 pid_t pid;
 
 // função auxiliar usada para interromper o ciclo infinito
@@ -20,6 +20,7 @@ static void sig_handler(int sig){
     (void) sig;
     running = 0;
 
+    // terminar os child processes
     if (pid == 0){
         exit(0);
     }
@@ -27,8 +28,6 @@ static void sig_handler(int sig){
     killpg(pid, SIGKILL);
 
     // eliminar os named pipes
-    char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
-
     for (int i = 1; i <= n; i++){
         int next = (i == n) ?  1 : i + 1;
         
@@ -77,8 +76,8 @@ int main(int argc, char* argv[]){
     }
 
     int fd[2]; // file descriptor
-    MAX_PIPENAME_SIZE = 12 + 2 * int_digits(n);
-    char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
+    int MAX_PIPENAME_SIZE = 12 + 2 * int_digits(n);
+    pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
 
     signal(SIGINT, sig_handler);
 
