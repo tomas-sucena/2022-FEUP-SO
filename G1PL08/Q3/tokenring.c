@@ -10,13 +10,34 @@
 #define READ 0
 #define WRITE 1
 
+/* VARIÁVEIS GLOBAIS */
 static volatile sig_atomic_t running = 1;
+int n, MAX_PIPENAME_SIZE;
 pid_t pid;
 
 // função auxiliar usada para interromper o ciclo infinito
 static void sig_handler(int sig){
     (void) sig;
     running = 0;
+
+    if (pid == 0){
+        exit(0);
+    }
+
+    killpg(pid, SIGKILL);
+
+    // eliminar os named pipes
+    char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
+
+    for (int i = 1; i <= n; i++){
+        int next = (i == n) ?  1 : i + 1;
+        
+        sprintf(pipename, "pipes/pipe%dto%d", i, next);
+
+        unlink(pipename);
+    }
+
+    exit(0);
 }
 
 // função auxiliar usada para descobrir o nº de dígitos de um inteiro
@@ -37,7 +58,7 @@ int main(int argc, char* argv[]){
     }
 
     /* ARGUMENTOS */
-    int n = atoi(argv[1]);
+    n = atoi(argv[1]);
     float p = atof(argv[2]);
     float t = atof(argv[3]);
 
@@ -56,7 +77,7 @@ int main(int argc, char* argv[]){
     }
 
     int fd[2]; // file descriptor
-    int MAX_PIPENAME_SIZE = 12 + 2 * int_digits(n);
+    MAX_PIPENAME_SIZE = 12 + 2 * int_digits(n);
     char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
 
     signal(SIGINT, sig_handler);
@@ -141,22 +162,6 @@ w:      if (p >= rng()){
         token++; // incrementar o token
         write(fd[WRITE], &token, sizeof(token));
         close(fd[WRITE]);
-    }
-
-    // eliminar os child processes
-    if (pid == 0){
-        /* Child */
-        exit(0);
-    }
-
-    kill(pid, SIGKILL);
-
-    for (int i = 1; i <= n; i++){
-        int next = (i == n) ?  1 : i + 1;
-        
-        sprintf(pipename, "pipes/pipe%dto%d", i, next);
-
-        unlink(pipename);
     }
     
     return EXIT_SUCCESS;
