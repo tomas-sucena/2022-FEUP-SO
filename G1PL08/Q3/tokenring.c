@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <math.h>
@@ -9,32 +10,13 @@
 #define READ 0
 #define WRITE 1
 
-/* VARIÁVEIS GLOBAIS */
 static volatile sig_atomic_t running = 1;
-int n; // número de processos
-int MAX_PIPENAME_SIZE;
-pid_t pid;
+int cleaner = 0;
 
 // função auxiliar usada para interromper o ciclo infinito
 static void sig_handler(int sig){
     (void) sig;
     running = 0;
-
-    // terminar os child processess
-    if (pid == 0){
-        exit(0);
-    }
-
-    // eliminar os named pipes
-    char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
-
-    for (int i = 1; i <= n; i++){
-        int next = (i == n) ?  1 : i + 1;
-        
-        sprintf(pipename, "pipes/pipe%dto%d", i, next);
-
-        unlink(pipename);
-    }
 }
 
 // função auxiliar usada para descobrir o nº de dígitos de um inteiro
@@ -55,7 +37,7 @@ int main(int argc, char* argv[]){
     }
 
     /* ARGUMENTOS */
-    n = atoi(argv[1]);
+    int n = atoi(argv[1]);
     float p = atof(argv[2]);
     float t = atof(argv[3]);
 
@@ -74,7 +56,7 @@ int main(int argc, char* argv[]){
     }
 
     int fd[2]; // file descriptor
-    MAX_PIPENAME_SIZE = 12 + 2 * int_digits(n);
+    int MAX_PIPENAME_SIZE = 12 + 2 * int_digits(n);
     char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
 
     signal(SIGINT, sig_handler);
@@ -92,7 +74,7 @@ int main(int argc, char* argv[]){
     int p_num = 1; // nº do processo
 
     for (int i = 2; i <= n; i++){
-        pid = fork();
+        pid_t pid = fork();
 
         if (pid < 0){
             perror("Error! Could not fork");
@@ -111,6 +93,8 @@ int main(int argc, char* argv[]){
     
     int prev = n,
         next = (n == 1) ? 1 : 2;
+
+    cleaner = 1;
 
     goto w; // w -> write
     
@@ -161,5 +145,17 @@ w:      if (p >= rng()){
         close(fd[WRITE]);
     }
 
+    // eliminar os named pipes
+
+    if (cleaner){
+        for (int i = 1; i <= n; i++){
+            int next = (i == n) ?  1 : i + 1;
+            
+            sprintf(pipename, "pipes/pipe%dto%d", i, next);
+
+            unlink(pipename);
+        }
+    }
+    
     return EXIT_SUCCESS;
 }
