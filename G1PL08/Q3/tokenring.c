@@ -11,21 +11,16 @@
 
 /* VARIÁVEIS GLOBAIS */
 static volatile sig_atomic_t running = 1;
-int n = 0;
-char* pipename;
-pid_t pid;
+static int n = 0;
+static char* pipename;
+static pid_t pid;
 
 // função auxiliar usada para interromper o ciclo infinito
 static void sig_handler(int sig){
-    (void) sig;
     running = 0;
 
-    // terminar os child processes
-    if (pid == 0){
-        exit(0);
-    }
-
-    killpg(pid, SIGKILL);
+    // terminar os restantes processos
+    kill(0, sig);
 
     // eliminar os named pipes
     for (int i = 1; i <= n; i++){
@@ -40,8 +35,8 @@ static void sig_handler(int sig){
 }
 
 // função auxiliar usada para descobrir o nº de dígitos de um inteiro
-int int_digits(int n){
-    return (int) log10((double) n) + 1;
+int int_digits(int num){
+    return (int) log10((double) num) + 1;
 }
 
 // função auxiliar usada para gerar números pseudo-aleatórios entre 0 e 1
