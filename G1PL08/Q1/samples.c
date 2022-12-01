@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_STRING_SIZE 128
+
 int main(int argc, char* argv[]){
     // verificar se há argumentos suficientes
     if (argc < 4){
@@ -12,7 +14,7 @@ int main(int argc, char* argv[]){
 
     // caso haja um erro a encontrar o ficheiro
     if (fptr == NULL){
-        char* error_msg = (char*) malloc(64 * sizeof(char));
+        char* error_msg = (char*) malloc(MAX_STRING_SIZE * sizeof(char));
         sprintf(error_msg, "Error! The file \"%s\" could not be opened", argv[1]);
 
         perror(error_msg);
@@ -42,9 +44,19 @@ int main(int argc, char* argv[]){
 
     rewind(fptr);
 
+    // verificar se o tamanho do ficheiro é maior do que o tamanho de cada fragmento
+    if (F_SIZE < (long) m){
+        char* error_msg = (char*) malloc(MAX_STRING_SIZE * sizeof(char));
+        sprintf(error_msg, "Error! The size of each fragment (%d) is bigger than the size of the file (%ld)", m, F_SIZE);
+
+        perror(error_msg);
+
+        return EXIT_FAILURE;
+    }
+
     // imprimir os fragmentos de texto
     for (int i = 0; i < n; i++){
-        long off = random() % (F_SIZE - m); // posição a partir da qual vão ser impressos os caratéres
+        long off = random() % (F_SIZE - m + 1); // posição a partir da qual vão ser impressos os caratéres
 
         fseek(fptr, off, SEEK_SET);
         
