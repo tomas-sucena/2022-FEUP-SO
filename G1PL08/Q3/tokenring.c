@@ -11,7 +11,7 @@
 #define WRITE 1
 
 static volatile sig_atomic_t running = 1;
-int cleaner = 0;
+pid_t pid;
 
 // função auxiliar usada para interromper o ciclo infinito
 static void sig_handler(int sig){
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]){
     int p_num = 1; // nº do processo
 
     for (int i = 2; i <= n; i++){
-        pid_t pid = fork();
+        pid = fork();
 
         if (pid < 0){
             perror("Error! Could not fork");
@@ -93,8 +93,6 @@ int main(int argc, char* argv[]){
     
     int prev = n,
         next = (n == 1) ? 1 : 2;
-
-    cleaner = 1;
 
     goto w; // w -> write
     
@@ -145,16 +143,20 @@ w:      if (p >= rng()){
         close(fd[WRITE]);
     }
 
-    // eliminar os named pipes
+    // eliminar os child processes
+    if (pid == 0){
+        /* Child */
+        exit(0);
+    }
 
-    if (cleaner){
-        for (int i = 1; i <= n; i++){
-            int next = (i == n) ?  1 : i + 1;
-            
-            sprintf(pipename, "pipes/pipe%dto%d", i, next);
+    kill(pid, SIGKILL);
 
-            unlink(pipename);
-        }
+    for (int i = 1; i <= n; i++){
+        int next = (i == n) ?  1 : i + 1;
+        
+        sprintf(pipename, "pipes/pipe%dto%d", i, next);
+
+        unlink(pipename);
     }
     
     return EXIT_SUCCESS;
