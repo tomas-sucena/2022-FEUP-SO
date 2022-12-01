@@ -13,16 +13,21 @@
 static volatile sig_atomic_t running = 1;
 int n; // número de processos
 int MAX_PIPENAME_SIZE;
+pid_t pid;
 
 // função auxiliar usada para interromper o ciclo infinito
-static void sig_handler(int _){
-    (void) _;
-    puts("Hey\n");
+static void sig_handler(int sig){
+    (void) sig;
     running = 0;
 
-    char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
+    // terminar os child processess
+    if (pid == 0){
+        exit(0);
+    }
 
     // eliminar os named pipes
+    char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
+
     for (int i = 1; i <= n; i++){
         int next = (i == n) ?  1 : i + 1;
         
@@ -72,6 +77,8 @@ int main(int argc, char* argv[]){
     MAX_PIPENAME_SIZE = 12 + 2 * int_digits(n);
     char* pipename = (char*) malloc(MAX_PIPENAME_SIZE * sizeof(char));
 
+    signal(SIGINT, sig_handler);
+
     // criar os named pipes
     for (int i = 1; i <= n; i++){
         int next = (i == n) ?  1 : i + 1;
@@ -85,7 +92,7 @@ int main(int argc, char* argv[]){
     int p_num = 1; // nº do processo
 
     for (int i = 2; i <= n; i++){
-        pid_t pid = fork();
+        pid = fork();
 
         if (pid < 0){
             perror("Error! Could not fork");
@@ -108,8 +115,6 @@ int main(int argc, char* argv[]){
     goto w; // w -> write
     
     // passar o token
-    signal(SIGINT, sig_handler);
-
 r:  while (running){
         // LEITURA
         prev = (p_num == 1) ? n : p_num - 1; // processo anterior
@@ -155,4 +160,6 @@ w:      if (p >= rng()){
         write(fd[WRITE], &token, sizeof(token));
         close(fd[WRITE]);
     }
+
+    return EXIT_SUCCESS;
 }
