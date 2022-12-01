@@ -44,7 +44,7 @@ int main(int argc, char* argv[]){
 
     // imprimir os fragmentos de texto
     for (int i = 0; i < n; i++){
-        long off = random() % (F_SIZE - m); // posição a partir da qual vão ser impressos os caracteres
+        long off = random() % (F_SIZE - m); // posição a partir da qual vão ser impressos os caratéres
 
         fseek(fptr, off, SEEK_SET);
         
